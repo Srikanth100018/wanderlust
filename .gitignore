@@ -1,0 +1,55 @@
+# Python
+*.py[cod]
+__pycache__/
+*.so
+*.egg
+*.egg-info/
+*.log
+
+# Virtual Environment
+venv/
+env/
+ENV/
+
+# Django
+*.sqlite3
+db.sqlite3
+*.pyc
+*.pyo
+*.pyd
+*.log
+*.pot
+*.mo
+
+# Media files (use Cloudinary instead)
+media/
+staticfiles/
+
+# Environment variables
+.env
+.env.production
+.env.local
+
+# Django migrations
+*/migrations/*.py
+!*/migrations/__init__.py
+
+# IDEs / editors
+.vscode/
+.idea/
+*.sublime-project
+*.sublime-workspace
+*.swp
+
+# OS files
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Coverage / test reports
+htmlcov/
+.tox/
+.coverage
+.nox/
+pytest_cache/
+.pytest_cache/

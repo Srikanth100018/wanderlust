@@ -1,0 +1,39 @@
+{% extends "layouts/boilerplate.html" %}
+{% block content %}
+<div class="container mt-4">
+  <h3>Bookings</h3>
+  <a href="{% url 'bookings:booking_create' %}" class="btn btn-primary mb-3">New Booking</a>
+  <table class="table table-bordered">
+    <thead>
+      <tr>
+        <th>Listing</th>
+        <th>Guest</th>
+        <th>Check-in</th>
+        <th>Check-out</th>
+        <th>Booked At</th>
+        <th></th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for booking in bookings %}
+        <tr>
+          <td>{{ booking.listing.title }}</td>
+          <td>
+            {% if request.user.is_staff or request.user.groups.filter(name='Hosts').exists %}
+              {{ booking.user.get_full_name }} ({{ booking.user.email }})
+            {% else %}
+              You
+            {% endif %}
+          </td>
+          <td>{{ booking.check_in }}</td>
+          <td>{{ booking.check_out }}</td>
+          <td>{{ booking.created_at }}</td>
+          <td><a href="{% url 'bookings:booking_detail' booking.pk %}">View</a></td>
+        </tr>
+      {% empty %}
+        <tr><td colspan="6">No bookings available.</td></tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% endblock %}

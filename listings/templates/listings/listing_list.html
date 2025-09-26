@@ -1,0 +1,184 @@
+{% extends "layouts/boilerplate.html" %}
+{% load static %}
+{% block content %}
+
+<style>
+/* -------------------- Filters bar -------------------- */
+#filters {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  border-bottom: 1px solid #ddd;
+  background-color: #fff;
+  padding: 0.8rem 1.2rem;
+  flex-wrap: wrap;
+}
+.filters-left {
+  display: flex;
+  align-items: center;
+  flex-wrap: nowrap;
+  gap: 1.5rem;
+  overflow-x: auto;
+  scrollbar-width: thin;
+}
+.filter {
+  text-align: center;
+  opacity: 0.7;
+  flex-shrink: 0;
+  padding-bottom: 0.3rem;
+  user-select: none;
+}
+.filter:hover { opacity: 1; cursor: pointer; }
+.filter.active { opacity: 1; border-bottom: 2px solid #000; }
+.filter p { font-size: 0.8rem; margin-top: 0.3rem; color: #000; }
+.filters-right { display: flex; align-items: center; gap: 1rem; }
+.tax-toggle { border: 1px solid #000; border-radius: 25px; padding: 0.3rem 0.8rem; display: flex; align-items: center; }
+
+/* -------------------- Listings grid -------------------- */
+.listings-container {
+  padding: 2rem;
+}
+.card-img-top {
+  height: 200px;
+  object-fit: cover;
+  border-top-left-radius: 0.5rem;
+  border-top-right-radius: 0.5rem;
+}
+.card { 
+  transition: transform 0.2s ease-in-out;
+}
+.card:hover { 
+  transform: scale(1.02);
+}
+</style>
+
+<!-- Filters -->
+<div id="filters">
+  <div class="filters-left">
+    <div class="filter active" data-type="All"><i class="fa-solid fa-globe"></i><p>All</p></div>
+    <div class="filter" data-type="Trending"><i class="fa-solid fa-fire"></i><p>Trending</p></div>
+    <div class="filter" data-type="Rooms"><i class="fa-solid fa-bed"></i><p>Rooms</p></div>
+    <div class="filter" data-type="Iconic Cities"><i class="fa-solid fa-mountain-city"></i><p>Iconic Cities</p></div>
+    <div class="filter" data-type="Hot Beaches"><i class="fa-solid fa-umbrella-beach"></i><p>Hot Beaches</p></div>
+    <div class="filter" data-type="Mountains"><i class="fa-solid fa-mountain"></i><p>Mountains</p></div>
+    <div class="filter" data-type="Castles"><i class="fa-brands fa-fort-awesome"></i><p>Castles</p></div>
+    <div class="filter" data-type="Islands"><i class="fa-solid fa-island-tropical"></i><p>Islands</p></div>
+    <div class="filter" data-type="Pools"><i class="fa-solid fa-person-swimming"></i><p>Pools</p></div>
+    <div class="filter" data-type="Camping"><i class="fa-solid fa-campground"></i><p>Camping</p></div>
+    <div class="filter" data-type="Farms"><i class="fa-solid fa-cow"></i><p>Farms</p></div>
+    <div class="filter" data-type="Arctic"><i class="fa-solid fa-snowflake"></i><p>Arctic</p></div>
+    <div class="filter" data-type="Ships"><i class="fa-solid fa-ship"></i><p>Ships</p></div>
+    <div class="filter" data-type="Domes"><i class="fa-solid fa-igloo"></i><p>Domes</p></div>
+  </div>
+  <div class="filters-right">
+    <div class="tax-toggle">
+      <div class="form-check-reverse form-switch">
+        <input class="form-check-input" type="checkbox" role="switch" id="flexswitchCheckDefault">
+        <label class="form-check-label" for="flexswitchCheckDefault">Total after taxes</label>
+      </div>
+    </div>
+  
+    <!-- Add New Listing Button (only for hosts/admins) -->
+    {% if user.is_authenticated and user.role == "host" or user.role == "admin" %}
+      <a href="{% url 'listings:listing_create' %}" class="btn btn-dark">
+        <i class="fa-solid fa-plus"></i> Add Listing
+      </a>
+    {% endif %}
+  </div>
+  
+  
+</div>
+
+<!-- Listings -->
+<div class="container-fluid listings-container">
+  <div class="row g-4">
+    {% for listing in listings %}
+      <div class="col-12 col-sm-6 col-md-4 col-lg-3 listing-card"
+           data-type="{{ listing.category }}"
+           data-title="{{ listing.title|lower }}"
+           data-slug="{{ listing.auto_slug }}">
+        <a href="{% url 'listings:listing_detail' listing.id %}" class="text-decoration-none text-dark">
+          <div class="card shadow-sm rounded h-100">
+            {% if listing.display_image %}
+              <img src="{{ listing.display_image }}" class="card-img-top" alt="{{ listing.title }}">
+            {% else %}
+              <img src="{% static 'images/placeholder.png' %}" class="card-img-top" alt="No image">
+            {% endif %}
+            <div class="card-body">
+              <p class="fw-bold mb-1">{{ listing.title }}</p>
+              <p class="text-muted small mb-1">{{ listing.location }}, {{ listing.country }}</p>
+              <p class="mb-0 fw-semibold">
+                <!-- Base Price -->
+                <span class="base-price">₹{{ listing.price|floatformat:0 }}/night</span>
+                <span class="tax-info ms-2 text-muted small">
+                  + {{ app_settings.gst_rate|default:18|floatformat:0 }}% GST
+                </span>
+                
+
+                <!-- Total with GST -->
+                <span class="total-price text-success" style="display:none;">
+                  ₹{{ listing.price_with_tax|floatformat:0 }}/night (incl. GST)
+                </span>
+              </p>
+            </div>
+          </div>
+        </a>
+      </div>
+    {% empty %}
+      <p class="text-muted">No listings available.</p>
+    {% endfor %}
+  </div>
+</div>
+
+<script>
+// -------------------- JS Logic --------------------
+const cards = document.querySelectorAll(".listing-card");
+const filters = document.querySelectorAll(".filter");
+const taxToggle = document.getElementById("flexswitchCheckDefault");
+
+// Get search query from navbar (?q=...)
+const urlParams = new URLSearchParams(window.location.search);
+const searchQuery = urlParams.get('q') ? urlParams.get('q').toLowerCase() : "";
+let activeFilter = "All";
+
+// Tax toggle
+taxToggle.addEventListener("click", () => {
+  document.querySelectorAll(".base-price, .tax-info, .total-price").forEach(el => {
+    el.style.display = (el.style.display === "none") ? "" : "none";
+  });
+});
+
+// Filter click
+filters.forEach(filter => {
+  filter.addEventListener("click", () => {
+    filters.forEach(f => f.classList.remove("active"));
+    filter.classList.add("active");
+    activeFilter = filter.dataset.type;
+    updateCards();
+  });
+});
+
+// Update cards based on filter + search
+function updateCards() {
+  cards.forEach(card => {
+    const title = card.dataset.title;
+    const slug = card.dataset.slug.toLowerCase();
+    const type = card.dataset.type;
+
+    const matchesFilter = (activeFilter === "All" || type === activeFilter);
+    const matchesSearch = (!searchQuery || title.includes(searchQuery) || slug.includes(searchQuery));
+
+    if (matchesFilter && matchesSearch) {
+      card.classList.remove("d-none");
+    } else {
+      card.classList.add("d-none");
+    }
+  });
+}
+
+// Initial run
+updateCards();
+</script>
+
+{% endblock %}

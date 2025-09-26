@@ -1,0 +1,9 @@
+{% extends "layouts/boilerplate.html" %}
+{% block content %}
+<div class="container my-5 text-center">
+  <h2 class="text-danger">❌ Payment Cancelled</h2>
+  <p>Your booking for <strong>{{ booking.listing.title }}</strong> was not completed.</p>
+  <p>You can try again or choose another listing.</p>
+  <a href="{% url 'listings:listing_list' %}" class="btn btn-secondary mt-3">Back to Listings</a>
+</div>
+{% endblock %}

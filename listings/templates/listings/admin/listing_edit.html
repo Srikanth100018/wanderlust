@@ -1,0 +1,95 @@
+{% extends "layouts/boilerplate.html" %}
+{% load static %}
+
+{% block content %}
+<div class="row">
+  <div class="col-8 offset-2">
+    <br><br>
+
+    <form method="POST" enctype="multipart/form-data" novalidate class="needs-validation">
+      {% csrf_token %}
+      <h3>Edit your Listing</h3><br>
+
+      <!-- Title -->
+      <div class="mb-3">
+        <label for="id_title" class="form-label">Title</label>
+        <input name="title" id="id_title" value="{{ form.title.value|default:listing.title }}" type="text" placeholder="Enter title" class="form-control" required>
+        <div class="valid-feedback">Title looks good</div>
+        {% if form.title.errors %}
+          <div class="text-danger">{{ form.title.errors }}</div>
+        {% endif %}
+      </div>
+      <br><br>
+
+      <!-- Description -->
+      <div class="mb-3">
+        <label for="id_description" class="form-label">Description</label>
+        <textarea name="description" id="id_description" class="form-control" placeholder="Enter description" required>{{ form.description.value|default:listing.description }}</textarea>
+        <div class="invalid-feedback">Please enter a short description</div>
+        {% if form.description.errors %}
+          <div class="text-danger">{{ form.description.errors }}</div>
+        {% endif %}
+      </div>
+      <br><br>
+
+      <!-- Original Image -->
+      {% if listing.image %}
+      <div class="mb-3">
+        Original Listing Image<br>
+        <img class="card-img-top show-img" src="{{ listing.image.url }}" style="max-height:250px; object-fit:cover;">
+      </div>
+      {% endif %}
+      <br>
+
+      <!-- Upload new image -->
+      <div class="mb-3">
+        <label for="id_image" class="form-label">Upload New Image</label>
+        <input name="image" id="id_image" type="file" class="form-control">
+        {% if form.image.errors %}
+          <div class="text-danger">{{ form.image.errors }}</div>
+        {% endif %}
+      </div>
+      <br><br>
+
+      <div class="row">
+        <!-- Price -->
+        <div class="mb-3 col-md-4">
+          <label for="id_price" class="form-label">Price</label>
+          <input name="price" id="id_price" value="{{ form.price.value|default:listing.price }}" type="number" placeholder="Enter price" class="form-control" required>
+          <div class="invalid-feedback">Price should be valid</div>
+          {% if form.price.errors %}
+            <div class="text-danger">{{ form.price.errors }}</div>
+          {% endif %}
+        </div>
+        <br><br>
+
+        <!-- Country -->
+        <div class="mb-3 col-md-8">
+          <label for="id_country" class="form-label">Country</label>
+          <input name="country" id="id_country" value="{{ form.country.value|default:listing.country }}" type="text" placeholder="Enter country" class="form-control" required>
+          <div class="invalid-feedback">Country name should be valid</div>
+          {% if form.country.errors %}
+            <div class="text-danger">{{ form.country.errors }}</div>
+          {% endif %}
+        </div>
+      </div>
+      <br><br>
+
+      <!-- Location -->
+      <div class="mb-3">
+        <label for="id_location" class="form-label">Location</label>
+        <input name="location" id="id_location" value="{{ form.location.value|default:listing.location }}" type="text" placeholder="Enter location" class="form-control" required>
+        <div class="invalid-feedback">Location should be valid</div>
+        {% if form.location.errors %}
+          <div class="text-danger">{{ form.location.errors }}</div>
+        {% endif %}
+      </div>
+      <br><br>
+
+      <button class="btn btn-dark edit-btn">Save Changes</button>
+      <br><br>
+    </form>
+  </div>
+</div>
+<script src="{% staticfiles 'admin/js/script.js' %}"></script>
+{% endblock %}

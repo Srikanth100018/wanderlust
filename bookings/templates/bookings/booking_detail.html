@@ -1,0 +1,28 @@
+<!-- Bookings section -->
+<div class="card shadow-lg border-0 mt-4">
+  <div class="card-header bg-primary text-white">
+    <h5 class="mb-0">Bookings for {{ listing.title }}</h5>
+  </div>
+  <div class="card-body">
+    {% if bookings and bookings.count > 0 %}
+      <ul class="list-group">
+        {% for booking in bookings %}
+        <li class="list-group-item d-flex justify-content-between align-items-center">
+          <div>
+            <strong>{{ booking.user.get_full_name|default:booking.user.username }}</strong>
+            <br>
+            <small class="text-muted">{{ booking.user.email }}</small>
+            <br>
+            Check-in: {{ booking.check_in }} | Check-out: {{ booking.check_out }}
+          </div>
+          <span class="badge bg-info text-dark">
+            Booked at: {{ booking.created_at|date:"M j, Y g:i a" }}
+          </span>
+        </li>
+        {% endfor %}
+      </ul>
+    {% else %}
+      <p class="text-muted">No bookings yet for this listing.</p>
+    {% endif %}
+  </div>
+</div>

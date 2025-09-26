@@ -1,0 +1,22 @@
+{% extends "layouts/boilerplate.html" %}
+{% block content %}
+<div class="container my-5 text-center">
+  <h2 class="text-success">🎉 Payment Successful!</h2>
+  <p>Your booking for <strong>{{ booking.listing.title }}</strong> has been confirmed.</p>
+
+  <div class="card mx-auto mt-4" style="max-width:400px;">
+    <div class="card-body text-start">
+      <p><strong>Booking ID:</strong> {{ booking.id }}</p>
+      <p><strong>Check-in:</strong> {{ booking.check_in }}</p>
+      <p><strong>Check-out:</strong> {{ booking.check_out }}</p>
+      <p><strong>Nights:</strong> {{ booking.nights }}</p>
+      <p><strong>Total Paid:</strong> ₹{{ booking.total_bill|floatformat:2 }}</p>
+      {% if payment %}
+        <p><strong>Payment ID:</strong> {{ payment.razorpay_payment_id }}</p>
+      {% endif %}
+    </div>
+  </div>
+
+  <a href="{% url 'listings:listing_list' %}" class="btn btn-primary mt-4">Back to Listings</a>
+</div>
+{% endblock %}

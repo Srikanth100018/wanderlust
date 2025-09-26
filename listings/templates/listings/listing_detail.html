@@ -1,0 +1,217 @@
+{% extends "layouts/boilerplate.html" %}
+{% load humanize %}
+{% load static %}
+
+{% block content %}
+<div class="container mt-4">
+  <div class="row justify-content-center">
+    
+    <!-- Left side: Listing Card -->
+    <div class="{% if bookings %}col-lg-6{% else %}col-lg-8 col-md-10{% endif %}">
+      <div class="card show-card shadow-sm mx-auto">
+        {% if listing.display_image %}
+          <img src="{{ listing.display_image }}" class="card-img-top show-img" alt="{{ listing.title }}">
+        {% else %}
+          <img src="{% static 'images/placeholder.png' %}" class="card-img-top show-img" alt="No image available">
+        {% endif %}
+
+        <div class="card-body text-center">
+          <h3>{{ listing.title }}</h3>
+          <p class="card-text mb-1">Owned by <i>{{ listing.owner.username }}</i></p>
+          <p class="card-text mb-2">{{ listing.description }}</p>
+          <p class="card-text mb-1">&#8377; {{ listing.price|intcomma }} / night</p>
+          <p class="card-text mb-1">{{ listing.location }}</p>
+          <p class="card-text mb-0">{{ listing.country }}</p>
+        </div>
+
+        <!-- Booking Form -->
+        {% if request.user.is_authenticated and not request.user.is_staff %}
+        <div class="card-footer">
+          <form method="POST" action="{% url 'listings:book_listing' listing.id %}">
+            {% csrf_token %}
+            <div class="row">
+              <div class="col-md-6 mb-2">
+                <label for="check_in" class="form-label">Check-in:</label>
+                <input type="date" name="check_in" class="form-control" required>
+              </div>
+              <div class="col-md-6 mb-2">
+                <label for="check_out" class="form-label">Check-out:</label>
+                <input type="date" name="check_out" class="form-control" required>
+              </div>
+            </div>
+            <button type="submit" class="btn btn-primary w-100 mt-2">Book Now</button>
+          </form>
+        </div>
+        {% elif not request.user.is_authenticated %}
+        <div class="alert alert-warning text-center m-2">
+          <strong>Please <a href="{% url 'users:login' %}">login</a> to book this listing.</strong>
+        </div>
+        {% endif %}
+      </div>
+    </div>
+
+    <!-- Right side: Bookings (Desktop only, only if exist) -->
+    {% if bookings %}
+    <div class="col-lg-6 d-none d-lg-block">
+      <div class="card shadow-lg border-0">
+        <div class="card-header bg-primary text-white">
+          <h5 class="mb-0">Bookings for {{ listing.title }}</h5>
+        </div>
+        <div class="card-body overflow-auto" style="max-height: 500px;">
+          <ul class="list-group">
+            {% for booking in bookings %}
+            <li class="list-group-item d-flex flex-column flex-md-row justify-content-between align-items-start">
+              <div>
+                <strong>{{ booking.user.get_full_name|default:booking.user.username }}</strong>
+                <br>
+                <small class="text-muted">{{ booking.user.email }}</small>
+                <br>
+                Check-in: {{ booking.check_in }} | Check-out: {{ booking.check_out }}
+                <br>
+                Nights: {{ booking.nights }}
+              </div>
+              <div class="mt-2 mt-md-0 text-md-end">
+                <span class="badge bg-success fs-6">💰 ₹{{ booking.total_bill|intcomma }}</span>
+              </div>
+            </li>
+            {% endfor %}
+          </ul>
+        </div>
+      </div>
+    </div>
+    {% endif %}
+  </div>
+
+  <!-- Mobile Bookings Section (only if exist) -->
+  {% if bookings %}
+  <div class="d-lg-none mt-3 text-center">
+    <button class="btn btn-outline-primary w-100" type="button" data-bs-toggle="collapse" data-bs-target="#mobileBookings">
+      Show Bookings
+    </button>
+    <div class="collapse mt-2" id="mobileBookings">
+      <div class="card shadow-lg border-0">
+        <div class="card-header bg-primary text-white">
+          <h5 class="mb-0">Bookings for {{ listing.title }}</h5>
+        </div>
+        <div class="card-body">
+          <ul class="list-group">
+            {% for booking in bookings %}
+            <li class="list-group-item d-flex flex-column flex-md-row justify-content-between align-items-start">
+              <div>
+                <strong>{{ booking.user.get_full_name|default:booking.user.username }}</strong>
+                <br>
+                <small class="text-muted">{{ booking.user.email }}</small>
+                <br>
+                Check-in: {{ booking.check_in }} | Check-out: {{ booking.check_out }}
+                <br>
+                Nights: {{ booking.nights }}
+              </div>
+              <div class="mt-2 mt-md-0 text-md-end">
+                <span class="badge bg-success fs-6">💰 ₹{{ booking.total_bill|intcomma }}</span>
+              </div>
+            </li>
+            {% endfor %}
+          </ul>
+        </div>
+      </div>
+    </div>
+  </div>
+  {% endif %}
+
+  <!-- Reviews Section -->
+  <div class="container my-4 px-3 px-md-5">
+    <hr>
+    {% if request.user.is_authenticated and not request.user.is_staff %}
+      <h4>Leave a Review</h4>
+      <form action="{% url 'listings:add_review' listing.id %}" method="POST" class="needs-validation w-100 w-md-75 mx-auto">
+        {% csrf_token %}
+        <div class="mb-3 mt-3 text-center">
+          <label for="rating" class="form-label d-block">Rate here</label>
+          <select name="rating" id="rating" class="form-control" required>
+            <option value="1">1 ⭐ Terrible</option>
+            <option value="2">2 ⭐ Not good</option>
+            <option value="3">3 ⭐ Average</option>
+            <option value="4">4 ⭐ Very good</option>
+            <option value="5">5 ⭐ Amazing</option>
+          </select>
+        </div>
+
+        <div class="mb-3 mt-3 text-center">
+          <label for="comment" class="form-label">Comments</label>
+          <textarea id="comment" name="comment" class="form-control"
+                    rows="5" placeholder="Add your Comment here" required></textarea>
+          <div class="invalid-feedback">Please add some comments for review</div>
+        </div>
+
+        <div class="text-center">
+          <button class="btn btn-outline-dark">Submit</button>
+        </div>
+      </form>
+    {% elif not request.user.is_authenticated %}
+      <div class="alert alert-warning text-center">
+        <strong>Please <a href="{% url 'users:login' %}">login</a> to leave a review.</strong>
+      </div>
+    {% endif %}
+
+    <hr>
+    <p><b>All Reviews</b></p>
+    <div class="row g-4">
+      {% for review in listing.reviews.all %}
+        <div class="col-12 col-sm-6 col-lg-4">
+          <div class="card review-card h-100 p-3 border border-secondary">
+            <div class="card-body">
+              <h5 class="card-title">@{{ review.user.username }}</h5>
+              <p class="card-text">⭐ {{ review.rating }}/5</p>
+              <p class="card-text">{{ review.comment }}</p>
+            </div>
+
+            {% if request.user == review.user or request.user.is_staff %}
+            <form method="POST" action="{% url 'listings:delete_review' listing.id review.id %}">
+              {% csrf_token %}
+              <button class="btn btn-sm btn-dark">Delete</button>
+            </form>
+            {% endif %}
+          </div>
+        </div>
+      {% empty %}
+        <p>No reviews yet.</p>
+      {% endfor %}
+    </div>
+  </div>
+
+  <!-- Map Section -->
+  <div class="container">
+    <h5>📍 Map of {{ listing.location }}, {{ listing.country }}</h5>
+    <div id="map" style="height: 400px;"></div>
+  </div>
+</div>
+
+<script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
+<script>
+  const locationString = "{{ listing.location }}, {{ listing.country }}";
+
+  fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(locationString)}`)
+    .then(response => response.json())
+    .then(data => {
+      if (data && data.length > 0) {
+        const lat = data[0].lat;
+        const lon = data[0].lon;
+        const map = L.map('map').setView([lat, lon], 14);
+
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+          attribution: '© OpenStreetMap'
+        }).addTo(map);
+
+        L.marker([lat, lon]).addTo(map)
+          .bindPopup(`<b>${locationString}</b>`)
+          .openPopup();
+      } else {
+        document.getElementById('map').innerHTML = "<p>Location not found.</p>";
+      }
+    })
+    .catch(err => {
+      console.error(err);
+      document.getElementById('map').innerHTML = "<p>Error loading map.</p>";
+    });
+</script>
+{% endblock %}

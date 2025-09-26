@@ -1,0 +1,27 @@
+{% extends "layouts/boilerplate.html" %}
+
+{% block content %}
+<body>
+  <br>
+  <div class="row">
+    <h2 class="col-6 offset-3">Login</h2>
+    <div class="col-6 offset-3">
+      <form action="{% url 'users:login' %}" method="POST" class="needs-validation" novalidate>
+        {% csrf_token %}
+        
+        <div class="mb-3">
+          <label for="username" class="form-label">Username</label>
+          <input name="username" id="username" placeholder="Enter username" type="text" class="form-control" required>
+        </div>
+
+        <div class="mb-3">
+          <label for="password" class="form-label">Password</label>
+          <input name="password" id="password" placeholder="Enter password" type="password" class="form-control" required>
+        </div>
+
+        <button class="btn btn-success" type="submit">Login</button>
+      </form>
+    </div>
+  </div>
+</body>
+{% endblock %}

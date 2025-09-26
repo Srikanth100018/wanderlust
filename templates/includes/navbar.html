@@ -1,0 +1,105 @@
+{% comment %} <nav class="navbar navbar-expand-lg border-bottom bg-white px-3 py-2">
+  <!-- Brand -->
+  <a class="navbar-brand fw-bold d-flex align-items-center" href="{% url 'listings:listing_list' %}">
+    <i class="fa-regular fa-compass text-danger me-2" style="font-size: 2rem;"></i>
+    Wanderlust
+  </a>
+
+  <!-- Toggler -->
+  <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarContent">
+    <span class="navbar-toggler-icon"></span>
+  </button>
+
+  <!-- Navbar Content -->
+  <div class="collapse navbar-collapse" id="navbarContent">
+
+    <!-- Left nav -->
+    <div class="navbar-nav">
+      {% if user.is_authenticated and user.role == "host" %}
+        <a class="nav-link" href="{% url 'listings:listing_create' %}">Add New Listing</a>
+      {% endif %}
+    </div>
+
+    <!-- Search bar (central) -->
+    <form class="d-flex mx-lg-auto my-2 my-lg-0" onsubmit="return false;">
+      <input id="navbar-search-input" class="form-control me-2" type="search" placeholder="Search destinations...">
+      <button class="btn btn-danger" type="button">
+        <i class="fa-solid fa-magnifying-glass"></i>
+      </button>
+    </form>
+
+    <!-- Right nav -->
+    <ul class="navbar-nav ms-auto align-items-center">
+      {% if not user.is_authenticated %}
+        <li class="nav-item"><a class="nav-link fw-bold" href="{% url 'users:signup' %}">Sign up</a></li>
+        <li class="nav-item"><a class="nav-link fw-bold" href="{% url 'users:login' %}">Log in</a></li>
+      {% else %}
+        <li class="nav-item dropdown">
+          <a class="nav-link dropdown-toggle" href="#" data-bs-toggle="dropdown">
+            {{ user.username }}
+          </a>
+          <ul class="dropdown-menu dropdown-menu-end">
+            <li><a class="dropdown-item" href="{% url 'users:profile' %}">Profile</a></li>
+            <li><a class="dropdown-item" href="{% url 'users:logout' %}">Logout</a></li>
+          </ul>
+        </li>
+      {% endif %}
+    </ul>
+  </div>
+</nav> {% endcomment %}
+<nav class="navbar navbar-expand-lg border-bottom bg-white px-3 py-2">
+  <!-- Brand -->
+  <a class="navbar-brand fw-bold d-flex align-items-center" href="{% url 'listings:listing_list' %}">
+    <i class="fa-regular fa-compass text-danger me-2" style="font-size: 2rem;"></i>
+    Wanderlust
+  </a>
+
+  <!-- Toggler -->
+  <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarContent">
+    <span class="navbar-toggler-icon"></span>
+  </button>
+
+  <!-- Navbar Content -->
+  <div class="collapse navbar-collapse" id="navbarContent">
+
+    <!-- Left nav -->
+    <div class="navbar-nav">
+      {% if user.is_authenticated and user.role == "host" %}
+        <a class="nav-link" href="{% url 'listings:listing_create' %}">Add New Listing</a>
+      {% endif %}
+    </div>
+
+    <!-- Search bar (central) -->
+    <form class="d-flex mx-lg-auto my-2 my-lg-0" method="get" action="{% url 'listings:listing_list' %}">
+      <input 
+        name="q"
+        id="navbar-search-input"
+        class="form-control me-2"
+        type="search"
+        placeholder="Search destinations..."
+        value="{{ request.GET.q|default:'' }}"
+      >
+      <button class="btn btn-danger" type="submit">
+        <i class="fa-solid fa-magnifying-glass"></i>
+      </button>
+    </form>
+
+    <!-- Right nav -->
+    <ul class="navbar-nav ms-auto align-items-center">
+      {% if not user.is_authenticated %}
+        <li class="nav-item"><a class="nav-link fw-bold" href="{% url 'users:signup' %}">Sign up</a></li>
+        <li class="nav-item"><a class="nav-link fw-bold" href="{% url 'users:login' %}">Log in</a></li>
+      {% else %}
+        <li class="nav-item dropdown">
+          <a class="nav-link dropdown-toggle" href="#" data-bs-toggle="dropdown">
+            {{ user.username }}
+          </a>
+          <ul class="dropdown-menu dropdown-menu-end">
+            <li><a class="dropdown-item" href="{% url 'users:profile' %}">Profile</a></li>
+            <li><a class="dropdown-item" href="{% url 'users:logout' %}">Logout</a></li>
+          </ul>
+        </li>
+      {% endif %}
+    </ul>
+  </div>
+</nav>

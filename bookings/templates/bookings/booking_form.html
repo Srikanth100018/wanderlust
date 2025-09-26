@@ -1,0 +1,11 @@
+{% extends "layouts/boilerplate.html" %}
+{% block content %}
+<div class="container mt-4">
+  <h3>New Booking</h3>
+  <form method="post">
+    {% csrf_token %}
+    {{ form.as_p }}
+    <button type="submit" class="btn btn-success">Book</button>
+  </form>
+</div>
+{% endblock %}
