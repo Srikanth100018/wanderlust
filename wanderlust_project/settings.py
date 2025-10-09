@@ -2,7 +2,7 @@ import os
 import sys
 from pathlib import Path
 from decouple import config, Csv
-
+import dj_database_url
 # -------------------- BASE --------------------
 BASE_DIR = Path(__file__).resolve().parent.parent
 
@@ -74,13 +74,18 @@ TEMPLATES = [
 WSGI_APPLICATION = "wanderlust_project.wsgi.application"
 
 # -------------------- DATABASE --------------------
+
+# -------------------- DATABASE --------------------
 DATABASES = {
-    "default": {
-        "ENGINE": "djongo",  # MongoDB Atlas
-        "NAME": config("MONGO_DB", default="wanderlust"),
-        "CLIENT": {"host": config("ATLASDB_URL")},
-    }
+    "default": dj_database_url.config(
+        default=config("DATABASE_URL"),  # Render provides this
+        conn_max_age=600,                # keeps connection alive
+        ssl_require=True                 # required by Render
+    )
 }
+
+
+
 
 # -------------------- AUTH --------------------
 AUTH_USER_MODEL = "users.User"

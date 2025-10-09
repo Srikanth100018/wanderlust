@@ -1,10 +1,12 @@
+import json
 import razorpay
+from decimal import Decimal, ROUND_HALF_UP
 from django.conf import settings
 from django.shortcuts import get_object_or_404, render
 from django.http import JsonResponse
 from django.views.decorators.csrf import csrf_exempt
+from django.views.decorators.http import require_POST
 from django.contrib.auth.decorators import login_required
-from decimal import Decimal, ROUND_HALF_UP
 from bookings.models import Booking
 from .models import Payment
 
@@ -17,9 +19,10 @@ def create_payment_order(request, booking_id):
     """Create a Razorpay payment order for a booking"""
     booking = get_object_or_404(Booking, id=booking_id, user=request.user)
 
-    # Apply 30% discount if first booking
+    # Apply 30% discount if this is the user's first paid booking
     has_discount = not Booking.objects.filter(user=request.user, is_paid=True).exists()
     amount = booking.total_bill
+
     if has_discount:
         amount = (amount * Decimal('0.7')).quantize(Decimal('1'), rounding=ROUND_HALF_UP)
 
@@ -28,14 +31,17 @@ def create_payment_order(request, booking_id):
         razorpay_amount = int(amount * 100)
 
         # Create Razorpay order
-        order = client.order.create(dict(
-            amount=razorpay_amount,
-            currency="INR",
-            payment_capture='1',  # auto capture
-            notes={"booking_id": str(booking.id), "user_id": str(request.user.id)}
-        ))
+        order = client.order.create({
+            "amount": razorpay_amount,
+            "currency": "INR",
+            "payment_capture": 1,  # auto capture
+            "notes": {
+                "booking_id": str(booking.id),
+                "user_id": str(request.user.id),
+            }
+        })
 
-        # Save payment entry
+        # Save payment entry (create or update)
         Payment.objects.update_or_create(
             booking=booking,
             defaults={
@@ -52,6 +58,7 @@ def create_payment_order(request, booking_id):
             "amount": razorpay_amount,
             "currency": "INR",
             "name": booking.listing.title,
+            "discount_applied": has_discount,
         })
 
     except Exception as e:
@@ -59,54 +66,49 @@ def create_payment_order(request, booking_id):
 
 
 @csrf_exempt
+@require_POST
 def razorpay_webhook(request):
     """Handle Razorpay webhook events"""
-    import json
-    from django.views.decorators.http import require_POST
+    webhook_secret = settings.RAZORPAY_WEBHOOK_SECRET
+    payload = request.body
+    signature = request.META.get("HTTP_X_RAZORPAY_SIGNATURE")
 
-    @require_POST
-    def _handler(request):
-        payload = request.body
-        signature = request.META.get("HTTP_X_RAZORPAY_SIGNATURE")
-        webhook_secret = settings.RAZORPAY_WEBHOOK_SECRET
+    # Verify webhook signature
+    try:
+        client.utility.verify_webhook_signature(payload, signature, webhook_secret)
+        data = json.loads(payload)
+    except Exception:
+        return JsonResponse({"status": "invalid signature"}, status=400)
 
-        # Verify webhook signature
+    # Handle payment captured event
+    if data.get("event") == "payment.captured":
+        razorpay_order_id = data['payload']['payment']['entity']['order_id']
         try:
-            client.utility.verify_webhook_signature(payload, signature, webhook_secret)
-            data = json.loads(payload)
-        except Exception:
-            return JsonResponse({"status": "invalid signature"}, status=400)
+            payment = Payment.objects.get(razorpay_order_id=razorpay_order_id)
+            payment.status = "paid"
+            payment.save()
 
-        # Payment captured successfully
-        if data.get("event") == "payment.captured":
-            razorpay_order_id = data['payload']['payment']['entity']['order_id']
-            try:
-                payment = Payment.objects.get(razorpay_order_id=razorpay_order_id)
-                payment.status = "paid"
-                payment.save()
-                booking = payment.booking
-                booking.is_paid = True
-                booking.save()
-            except Payment.DoesNotExist:
-                pass
+            booking = payment.booking
+            booking.is_paid = True
+            booking.save()
 
-        return JsonResponse({"status": "ok"}, status=200)
+        except Payment.DoesNotExist:
+            # Optionally log this case
+            pass
 
-    return _handler(request)
+    return JsonResponse({"status": "ok"}, status=200)
 
 
 @login_required
 def payment_success(request, booking_id):
     """Render success page with payment details"""
     booking = get_object_or_404(Booking, id=booking_id, user=request.user)
-    booking.is_paid = True
-    booking.save()
 
-    # Get the related payment object (if exists)
-    try:
-        payment = Payment.objects.get(booking=booking)
-    except Payment.DoesNotExist:
-        payment = None
+    # Mark booking as paid if payment is verified
+    payment = Payment.objects.filter(booking=booking).first()
+    if payment and payment.status == "paid":
+        booking.is_paid = True
+        booking.save()
 
     return render(request, "payments/success.html", {
         "booking": booking,
