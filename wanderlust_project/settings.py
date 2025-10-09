@@ -3,12 +3,16 @@ import sys
 from pathlib import Path
 from decouple import config, Csv
 import dj_database_url
+
 # -------------------- BASE --------------------
 BASE_DIR = Path(__file__).resolve().parent.parent
 
+# -------------------- ENVIRONMENT --------------------
+ENV = config("ENV", default="development")  # "development" or "production"
+
 # -------------------- SECURITY --------------------
 SECRET_KEY = config("SECRET", default="django-insecure-key")
-DEBUG = config("DEBUG", default=False, cast=bool)
+DEBUG = config("DEBUG", default=(ENV == "development"), cast=bool)
 
 ALLOWED_HOSTS = config(
     "ALLOWED_HOSTS",
@@ -74,18 +78,13 @@ TEMPLATES = [
 WSGI_APPLICATION = "wanderlust_project.wsgi.application"
 
 # -------------------- DATABASE --------------------
-
-# -------------------- DATABASE --------------------
 DATABASES = {
     "default": dj_database_url.config(
-        default=config("DATABASE_URL"),  # Render provides this
-        conn_max_age=600,                # keeps connection alive
-        ssl_require=True                 # required by Render
+        default=config("DATABASE_URL", default=f"sqlite:///{BASE_DIR / 'db.sqlite3'}"),
+        conn_max_age=600,
+        ssl_require=(ENV == "production")  # SSL only in production
     )
 }
-
-
-
 
 # -------------------- AUTH --------------------
 AUTH_USER_MODEL = "users.User"
@@ -110,7 +109,7 @@ USE_TZ = True
 
 # -------------------- STATIC & MEDIA --------------------
 STATIC_URL = "/static/"
-STATICFILES_DIRS = [BASE_DIR / "static"]
+STATICFILES_DIRS = [BASE_DIR / "static"] if (BASE_DIR / "static").exists() else []
 STATIC_ROOT = BASE_DIR / "staticfiles"
 
 MEDIA_URL = "/media/"
@@ -118,7 +117,6 @@ MEDIA_ROOT = BASE_DIR / "media"
 
 STATICFILES_STORAGE = "whitenoise.storage.CompressedManifestStaticFilesStorage"
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
-
 
 # -------------------- RAZORPAY (optional) --------------------
 RAZORPAY_KEY_ID = config("RAZORPAY_KEY_ID", default=None)
@@ -131,7 +129,7 @@ CLOUD_API_KEY = config("CLOUD_API_KEY", default="")
 CLOUD_API_SECRET = config("CLOUD_API_SECRET", default="")
 
 # -------------------- CORS --------------------
-CORS_ALLOW_ALL_ORIGINS = True
+CORS_ALLOW_ALL_ORIGINS = ENV == "development"  # Allow all only in dev
 CORS_ALLOW_CREDENTIALS = True
 
 # -------------------- SECURITY --------------------
@@ -140,7 +138,7 @@ SESSION_COOKIE_SECURE = not DEBUG
 SECURE_BROWSER_XSS_FILTER = True
 SECURE_CONTENT_TYPE_NOSNIFF = True
 
-if not DEBUG:
+if ENV == "production":
     SECURE_HSTS_SECONDS = 31536000
     SECURE_HSTS_INCLUDE_SUBDOMAINS = True
     SECURE_HSTS_PRELOAD = True
